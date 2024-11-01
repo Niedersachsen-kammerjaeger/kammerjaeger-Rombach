@@ -1,0 +1,38 @@
+jQuery( function( $ ) {
+
+    // Internet Explorer 6-11
+	var isIE = /*@cc_on!@*/false || !!document.documentMode;
+
+	// Edge 20+
+	var isEdge = !isIE && !!window.StyleMedia;
+
+	// Safari
+	var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+    // Detect if browser is Internet Explorer, Edge or Safari
+    if( isIE || isEdge || isSafari ) {
+
+        // Initialize object-fit-images polyfill with lazy load support
+        $('img').on('load', function() {
+            objectFitImages( $(this) );
+        });
+
+        // Initialize object-fit-images polyfill
+        $('img').each(function() {
+
+            var $image = $(this);
+            var pattern = new RegExp(/data:image\/([a-zA-Z]*);base64,([^\"]*)/);
+
+            // No base6 images allowed
+            if( !pattern.test( $image.attr( 'src' ) ) ) {
+                objectFitImages( $image );
+            }
+        });
+
+        // Initialize object-fit-videos polyfill
+        objectFitVideos();
+
+        // Initialize css-vars polyfill
+        cssVars();
+    }
+});

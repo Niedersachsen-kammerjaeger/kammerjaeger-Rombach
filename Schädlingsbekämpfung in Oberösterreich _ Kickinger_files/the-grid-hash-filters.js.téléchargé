@@ -1,0 +1,147 @@
+jQuery( function( $ ) {
+
+    /*
+    *  initialisation
+    *
+    *  This function prepare each grid when the document is ready (page has loaded)
+    */
+    $('.wst-the-grid.grid-hash-filters').each(function(i) {
+        init_the_grid_hash_filter( $(this) );
+    });
+
+    /*
+    *  init_the_grid_hash_filter
+    *
+    *  This function will prepare a Grid into the selected jQuery element
+    *
+    *  @param	$element (jQuery element)
+    *  @return	n/a
+    */
+    function init_the_grid_hash_filter($element)
+    {
+        var grid_id = get_grid_id($element);
+        var filter = get_hash_filter(grid_id);
+
+        if (filter) {
+            var filter_id = search_filter_id(grid_id, filter);
+
+            $('#grid-' + grid_id + ' .tg-grid-holder').data('filterload', filter_id);
+            $('#grid-' + grid_id + ' .tg-filter').removeClass('tg-filter-active');
+            $('#grid-' + grid_id + ' .tg-filter[data-filter="' + filter_id + '"]').addClass('tg-filter-active');
+        }
+
+        // Hash Change Event: Triggers the filter on hash change
+        $(window).on('hashchange', function() {
+        	var filter = get_hash_filter(grid_id);
+
+		    if (filter) {
+		    	var filter_id = search_filter_id(grid_id, filter);
+
+				$('#grid-' + grid_id + ' select.tg-dropdown-list').val(filter_id).trigger('change');
+		    	$('#grid-' + grid_id + ' .tg-filter[data-filter="' + filter_id + '"]').trigger('click');
+		    }
+        });
+
+        // Click - Event: Desktop Dropdown Filters
+        $(document).on('click', '#grid-' + grid_id + ' ul.tg-dropdown-list > li.tg-filter', function() {
+            var value = $(this).find('.tg-filter-name').text();
+            window.history.replaceState(null, null, document.location.pathname + '#' + 'filter-' + grid_id + '-' + sanitize_title(value));
+        });
+
+        // Click - Event: Desktop Inline Button Filters
+        $(document).on('click', '#grid-' + grid_id + ' div.tg-filters-holder > div.tg-filter', function() {
+            var value = $(this).find('.tg-filter-name').text();
+            window.history.replaceState(null, null, document.location.pathname + '#' + 'filter-' + grid_id + '-' + sanitize_title(value));
+        });
+
+        // Change - Event: Mobile select Filters
+        $(document).on('change', '#grid-' + grid_id + ' select.tg-dropdown-list', function() {
+            var value = $(this).find(':selected').text();
+            window.history.replaceState(null, null, document.location.pathname + '#' + 'filter-' + grid_id + '-' + sanitize_title(value));
+        });
+    }
+
+    /*
+    *  get_grid_id
+    *
+    *  This function get the grid id
+    *
+    *  @param	grid_id
+    *  @return	filter
+    */
+    function get_grid_id($element) {
+        var grid_id = $element.children('.tg-grid-wrapper').attr('id');
+
+        var matches = grid_id.match( /grid-([^&]+)/i );
+        return matches && matches[1];
+    }
+
+    /*
+    *  get_hash_filter
+    *
+    *  This function get a filter from the hash
+    *
+    *  @param	grid_id
+    *  @return	filter
+    */
+	function get_hash_filter(grid_id) {
+        var regex = new RegExp('filter-' + grid_id + '-([^&]+)', 'i');
+        var matches = location.hash.match(regex);
+        var hashFilter = matches && matches[1];
+        return hashFilter && decodeURIComponent( hashFilter );
+	}
+
+    /*
+    *  search_filter_id
+    *
+    *  This function search the filter id from the element
+    *
+    *  @param	grid_id
+    *  @param	filter
+    *  @return	filter_id
+    */
+    function search_filter_id(grid_id, filter) {
+        var filter_id = false;
+        $('#grid-' + grid_id + ' .tg-filter').each(function() {
+            var filter_name = $(this).children('.tg-filter-name').text();
+            if(sanitize_title(filter_name) == filter) {
+                filter_id = $(this).data('filter');
+                return false;
+            }
+        });
+
+        $('#grid-' + grid_id + ' select.tg-dropdown-list option').each(function() {
+            var filter_name = $(this).text();
+            if(sanitize_title(filter_name) == filter) {
+                filter_id = $(this).data('filter');
+                return false;
+            }
+        });
+
+        return filter_id;
+    }
+
+    /*
+    *  sanitize_title
+    *
+    *  This function sanitize the filter title
+    *
+    *  @param	str
+    *  @return	str
+    */
+    function sanitize_title(str) {
+        str = str.split(' ').join('-');
+        str = str.toLowerCase();
+
+        // remove accents, swap ñ for n, etc
+        var from = "àáäâèéëêìíïîòóöôùúüûñç·/_,:;";
+        var to   = "aaaaeeeeiiiioooouuuunc------";
+
+        for (var i = 0, l = from.length ; i < l ; i++) {
+            str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+        }
+
+        // remove invalid chars and collapse dashes
+        return str.replace(/[^a-z0-9 -]/g, '').replace(/-+/g, '-');
+    }
+});
